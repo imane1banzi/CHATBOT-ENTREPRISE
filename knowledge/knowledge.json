@@ -1,0 +1,14 @@
+{
+  "intents": [
+    {
+      "name": "jira_mediametrie_mdp",
+      "keywords": ["mediametrie", "mot de passe", "mdp", "jira"],
+      "response": "1. Ouvre Jira et connecte-toi avec ton compte.\n2. Clique sur \"Créer\" pour générer un nouveau ticket.\n3. Dans le type de ticket, choisis \"Demande\".\n4. Sélectionne le workspace Mediametrie.\n5. Renseigne le résumé : \"Mot de passe expiré – accès Mediametrie\".\n6. Remplis la description avec les détails du problème.\n7. Affecte le ticket à toi-même.\n8. Clique sur \"Créer / Submit\".\n9. Note le numéro du ticket pour le suivi."
+    },
+    {
+      "name": "reset_password",
+      "keywords": ["reset", "password", "mot de passe oublié"],
+      "response": "1. Accède à la page de connexion.\n2. Clique sur \"Mot de passe oublié\".\n3. Suis les instructions envoyées par email."
+    }
+  ]
+}
