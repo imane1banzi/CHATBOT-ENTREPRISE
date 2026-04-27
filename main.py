@@ -9,13 +9,17 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 
-# ✅ Fix warning : utiliser langchain-huggingface
 try:
     from langchain_huggingface import HuggingFaceEmbeddings
 except ImportError:
     from langchain_community.embeddings import HuggingFaceEmbeddings
 
-import requests
+# ✅ Groq (rapide, gratuit, API cloud)
+from groq import Groq
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # ✅ Charge les variables depuis le fichier .env
 
 app = FastAPI()
 
@@ -35,6 +39,14 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 
 # ------------------------
+# Groq client
+# ✅ Mets ta clé API ici ou dans une variable d'environnement GROQ_API_KEY
+# ------------------------
+groq_client = Groq(
+    api_key=os.environ.get("GROQ_API_KEY", "METS_TA_CLE_ICI")
+)
+
+# ------------------------
 # Schema
 # ------------------------
 class ChatRequest(BaseModel):
@@ -49,8 +61,8 @@ loader = PyPDFLoader("knowledge.pdf")
 documents = loader.load()
 
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=800,    # ✅ augmenté pour ne pas couper les procédures
-    chunk_overlap=100  # ✅ augmenté pour garder le contexte entre chunks
+    chunk_size=800,
+    chunk_overlap=100
 )
 
 docs = splitter.split_documents(documents)
@@ -74,7 +86,6 @@ def search_docs(query):
             line = line.strip()
             if not line:
                 continue
-            # ✅ Titre en majuscules → reformulé comme action claire
             if line.isupper():
                 cleaned_lines.append(f"Étape : {line.title()}")
             else:
@@ -87,9 +98,7 @@ def search_docs(query):
 # Prompt
 # ------------------------
 def build_prompt(context, question):
-    # ✅ Contexte tronqué à 800 caractères max
     context = context[:800]
-
     return f"""Tu es un assistant support IT.
 RÈGLES STRICTES :
 - Utilise UNIQUEMENT les informations du contexte ci-dessous.
@@ -111,7 +120,6 @@ Réponse (étapes numérotées, fidèles au contexte) :"""
 # ------------------------
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    # ✅ CORRECTION : syntaxe compatible Starlette/FastAPI récent
     return templates.TemplateResponse(request=request, name="index.html")
 
 # ------------------------
@@ -133,41 +141,34 @@ def chat(request: ChatRequest):
                 return
 
             # ------------------------
-            # RAG
+            # RAG : recherche dans le PDF
             # ------------------------
             context = search_docs(request.message)
             print("📄 Context (200 chars):", context[:200])
 
             prompt = build_prompt(context, request.message)
 
-            payload = {
-                "model": "phi3:latest",
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.1,
-                    "num_predict": 150,
-                    "num_ctx": 1024,
-                },
-                # ✅ Stop tokens pour éviter que le modèle continue après la réponse
-                "stop": ["Question", "Note", "Remarque", "Article", "En résumé", "---"]
-            }
-
-            # ✅ Timeout augmenté à 300 secondes
-            r = requests.post(
-                "http://localhost:11434/api/generate",
-                json=payload,
-                timeout=300
+            # ✅ Appel Groq — ultra rapide (Llama 3 sur GPU dédié)
+            completion = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",  # ✅ successeur de llama3-8b-8192
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Tu es un assistant support IT helpdesk. Tu réponds uniquement en français, avec des étapes numérotées claires."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=300,
+                stop=["Question", "Note :", "Remarque :", "En résumé"]  # ✅ max 4 items (limite Groq)
             )
 
-            if r.status_code != 200:
-                yield f"❌ Ollama error: {r.text}"
-                return
+            response = completion.choices[0].message.content.strip()
 
-            data = r.json()
-            response = data.get("response", "").strip()
-
-            # ✅ Sécurité : coupe tout texte parasite après la réponse
+            # Sécurité : coupe tout texte parasite après la réponse
             for stopper in ["Question", "Note :", "Remarque :", "Article", "En résumé"]:
                 if stopper in response:
                     response = response[:response.index(stopper)].strip()
@@ -177,10 +178,6 @@ def chat(request: ChatRequest):
             else:
                 print("✅ Réponse:", response[:100])
                 yield response
-
-        except requests.exceptions.Timeout:
-            print("❌ TIMEOUT Ollama")
-            yield "❌ Le modèle met trop de temps à répondre. Réessaie dans quelques secondes."
 
         except Exception as e:
             print("❌ ERREUR:", e)
