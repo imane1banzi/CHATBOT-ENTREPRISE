@@ -111,7 +111,8 @@ Réponse (étapes numérotées, fidèles au contexte) :"""
 # ------------------------
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # ✅ CORRECTION : syntaxe compatible Starlette/FastAPI récent
+    return templates.TemplateResponse(request=request, name="index.html")
 
 # ------------------------
 # Chat
