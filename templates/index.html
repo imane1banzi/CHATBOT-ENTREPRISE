@@ -3,175 +3,586 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chatbot Support</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Nova · Assistant IA de support IT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #140926;
+      --panel: rgba(255, 255, 255, 0.045);
+      --panel-strong: rgba(255, 255, 255, 0.07);
+      --border: rgba(167, 139, 250, 0.18);
+      --border-strong: rgba(167, 139, 250, 0.35);
+      --text: #f4f1fb;
+      --muted: #a99fc4;
+      --faint: #7d72a0;
+      --violet: #7c3aed;
+      --violet-2: #a855f7;
+      --gold: #f5b731;
+      --cyan: #22d3ee;
+      --green: #34d399;
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 600px at 12% -10%, rgba(124, 58, 237, 0.35), transparent 60%),
+        radial-gradient(700px 500px at 100% 100%, rgba(34, 211, 238, 0.10), transparent 60%),
+        radial-gradient(600px 400px at 0% 100%, rgba(245, 183, 49, 0.06), transparent 60%),
+        var(--bg);
+      overflow: hidden;
+    }
+
+    button { font: inherit; color: inherit; cursor: pointer; border: none; background: none; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 340px;
+      gap: 16px;
+      height: 100vh;
+      padding: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      min-height: 0;
+    }
+
+    /* ---------- Logo ---------- */
+    .logo-mark {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 55%, #4f46e5 100%);
+      display: grid; place-items: center; position: relative;
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .logo-mark::after {
+      content: ""; position: absolute; top: 7px; right: 7px;
+      width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+    }
+    .logo-mark svg { width: 60%; height: 60%; }
+    .logo-mark.sm { width: 26px; height: 26px; border-radius: 8px; }
+    .logo-mark.sm::after { top: 4px; right: 4px; width: 4px; height: 4px; }
+    .logo-mark.lg { width: 72px; height: 72px; border-radius: 22px; }
+    .logo-mark.lg::after { top: 12px; right: 12px; width: 9px; height: 9px; }
+
+    /* ---------- Sidebar ---------- */
+    .sidebar { display: flex; flex-direction: column; padding: 18px; gap: 18px; }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-name { font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 20px; letter-spacing: -0.3px; }
+    .brand-sub { font-size: 10.5px; font-weight: 700; letter-spacing: 2.5px; color: var(--cyan); }
+
+    .btn-new {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px; border-radius: 12px; font-weight: 600; font-size: 14px;
+      background: linear-gradient(135deg, var(--violet), var(--violet-2));
+      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-new:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(124, 58, 237, 0.5); }
+
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1.8px; color: var(--faint); text-transform: uppercase; }
+
+    .history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+    .history-item {
+      text-align: left; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .15s, color .15s;
+    }
+    .history-item:hover { background: var(--panel-strong); color: var(--text); }
+    .history-item.active { background: rgba(124, 58, 237, 0.22); color: var(--text); border: 1px solid var(--border-strong); }
+    .history-empty { font-size: 13px; color: var(--faint); padding: 4px 2px; }
+
+    .kb-card { padding: 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); }
+    .kb-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; }
+    .kb-doc { margin-top: 6px; font-size: 12.5px; color: var(--muted); word-break: break-all; }
+    .kb-meta { margin-top: 2px; font-size: 12px; color: var(--faint); }
+    .kb-status { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--green); }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(52, 211, 153, .6); animation: pulse 2s infinite; }
+    .kb-status.off { color: #f87171; }
+    .kb-status.off .pulse { background: #f87171; animation: none; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, .55); } 70% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); } }
+
+    /* ---------- Main ---------- */
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border-strong); background: rgba(124, 58, 237, 0.12); }
+    .pill.live { color: var(--cyan); border-color: rgba(34, 211, 238, 0.35); background: rgba(34, 211, 238, 0.08); }
+    .pill svg { width: 14px; height: 14px; }
+
+    .messages { flex: 1; overflow-y: auto; padding: 24px clamp(16px, 4vw, 40px); display: flex; flex-direction: column; gap: 22px; scroll-behavior: smooth; }
+
+    .welcome { margin: auto; text-align: center; max-width: 460px; display: flex; flex-direction: column; align-items: center; gap: 14px; animation: rise .5s ease both; }
+    .welcome h1 { font-family: "Montserrat", sans-serif; font-weight: 800; font-size: 28px; letter-spacing: -0.5px; }
+    .welcome h1 span { color: var(--gold); }
+    .welcome p { color: var(--muted); font-size: 15px; line-height: 1.55; }
+
+    .msg-user { align-self: flex-end; max-width: min(78%, 560px); padding: 13px 18px; border-radius: 18px 18px 4px 18px; font-size: 15px; line-height: 1.5; background: linear-gradient(135deg, #7c3aed, #9333ea); box-shadow: 0 10px 30px rgba(124, 58, 237, 0.35); animation: rise .3s ease both; white-space: pre-wrap; word-wrap: break-word; }
+
+    .msg-bot { align-self: stretch; max-width: 720px; display: flex; flex-direction: column; gap: 10px; animation: rise .3s ease both; }
+    .bot-head { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); }
+    .bot-head strong { color: var(--text); font-size: 14px; }
+
+    .steps { display: flex; flex-direction: column; gap: 8px; }
+    .step {
+      display: flex; align-items: center; gap: 14px; padding: 13px 14px; border-radius: 14px;
+      background: var(--panel-strong); border: 1px solid var(--border); cursor: pointer;
+      transition: border-color .2s, background .2s, opacity .2s; animation: rise .25s ease both;
+    }
+    .step:hover { border-color: var(--border-strong); }
+    .step-num { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--gold); border: 1.5px solid rgba(245, 183, 49, 0.55); }
+    .step-text { flex: 1; font-size: 15px; line-height: 1.45; }
+    .step-check { width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, 0.25); display: grid; place-items: center; transition: all .2s; }
+    .step-check svg { width: 14px; height: 14px; opacity: 0; transition: opacity .2s; }
+    .step.done { background: rgba(245, 183, 49, 0.06); border-color: rgba(245, 183, 49, 0.3); }
+    .step.done .step-text { color: var(--muted); }
+    .step.done .step-check { background: var(--gold); border-color: var(--gold); }
+    .step.done .step-check svg { opacity: 1; }
+
+    .bot-text { font-size: 15px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+
+    .unknown { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; background: rgba(34, 211, 238, 0.06); border: 1px solid rgba(34, 211, 238, 0.3); font-size: 15px; line-height: 1.5; }
+    .unknown svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--cyan); margin-top: 1px; }
+
+    .error { padding: 13px 16px; border-radius: 14px; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.35); color: #fecaca; font-size: 14.5px; }
+
+    .source-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .source-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--cyan); background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.28); transition: background .15s; }
+    .source-chip:hover { background: rgba(34, 211, 238, 0.16); }
+    .source-chip svg { width: 13px; height: 13px; }
+
+    .inline-sources { display: flex; flex-direction: column; gap: 10px; }
+    .inline-sources:empty { display: none; }
+
+    .typing { display: inline-flex; gap: 5px; padding: 14px 16px; border-radius: 14px; background: var(--panel-strong); border: 1px solid var(--border); width: fit-content; }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--violet-2); animation: blink 1.2s infinite ease-in-out; }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .composer { padding: 14px clamp(16px, 4vw, 40px) 18px; display: flex; flex-direction: column; gap: 10px; }
+    .suggestions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { padding: 7px 13px; border-radius: 999px; font-size: 13px; color: var(--muted); background: var(--panel-strong); border: 1px solid var(--border); transition: all .15s; }
+    .chip:hover { color: var(--text); border-color: var(--border-strong); background: rgba(124, 58, 237, 0.18); }
+
+    .input-box { display: flex; align-items: flex-end; gap: 10px; padding: 8px 8px 8px 18px; border-radius: 16px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-strong); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); transition: border-color .2s, box-shadow .2s; }
+    .input-box:focus-within { border-color: rgba(168, 85, 247, 0.7); box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18), 0 10px 40px rgba(0, 0, 0, 0.25); }
+    #message { flex: 1; resize: none; border: none; outline: none; background: transparent; color: var(--text); font: inherit; font-size: 15px; line-height: 1.5; padding: 9px 0; max-height: 140px; }
+    #message::placeholder { color: var(--faint); }
+    .send { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: linear-gradient(135deg, #6366f1, var(--violet-2)); box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45); transition: transform .15s, opacity .15s; }
+    .send:hover { transform: translateY(-1px); }
+    .send:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .send svg { width: 18px; height: 18px; }
+
+    /* ---------- Sources ---------- */
+    .sources { display: flex; flex-direction: column; overflow: hidden; }
+    .sources-head { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
+    .sources-title { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; }
+    .sources-title svg { width: 18px; height: 18px; color: var(--gold); }
+    .sources-sub { margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+    .sources-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .sources-empty { margin: auto; text-align: center; color: var(--faint); font-size: 13.5px; line-height: 1.5; max-width: 220px; }
+
+    .source-card { padding: 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); animation: rise .35s ease both; transition: border-color .3s, box-shadow .3s; }
+    .source-card.flash { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245, 183, 49, 0.18); }
+    .source-name { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--cyan); }
+    .source-name svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .source-text { margin-top: 10px; font-size: 13.5px; line-height: 1.6; color: #ddd6f3; white-space: pre-line; max-height: 220px; overflow-y: auto; }
+    .source-text mark { background: rgba(245, 183, 49, 0.2); color: var(--gold); font-weight: 600; padding: 0 3px; border-radius: 4px; }
+    .relevance { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+    .relevance-label { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; color: var(--faint); }
+    .bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    .bar > div { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--gold), var(--cyan)); transition: width .9s cubic-bezier(.2, .8, .2, 1); }
+    .relevance-value { font-size: 12px; font-weight: 700; color: var(--muted); min-width: 36px; text-align: right; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.22); border-radius: 8px; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1180px) {
+      .app { grid-template-columns: 240px minmax(0, 1fr); }
+      .sources { display: none; }
+    }
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; padding: 0; gap: 0; }
+      .sidebar { display: none; }
+      .main { border-radius: 0; border: none; }
+      .msg-user { max-width: 88%; }
+    }
+  </style>
 </head>
 
-<body class="bg-[#343541] text-white h-screen flex">
+<body>
+  <div class="app">
 
-  <!-- Sidebar -->
-  <div class="w-64 bg-[#202123] p-4 hidden md:flex flex-col gap-4">
-    <h2 class="text-lg font-bold">🤖 Support IT</h2>
+    <!-- Sidebar -->
+    <aside class="panel sidebar">
+      <div class="brand">
+        <div class="logo-mark" data-logo></div>
+        <div>
+          <div class="brand-name">Nova</div>
+          <div class="brand-sub">SUPPORT IT</div>
+        </div>
+      </div>
 
-    <button onclick="newChat()"
-            class="w-full bg-[#343541] p-2 rounded hover:bg-gray-700">
-      + Nouvelle discussion
-    </button>
-
-    <div>
-      <h3 class="text-sm font-semibold text-gray-300 mb-2">📚 Base de connaissances</h3>
-
-      <label class="block w-full text-center bg-green-600 p-2 rounded cursor-pointer hover:bg-green-700">
-        📄 Importer un PDF
-        <input id="pdfInput" type="file" accept="application/pdf,.pdf" multiple class="hidden"
-               onchange="uploadPdfs(this.files)">
-      </label>
-
-      <p id="uploadStatus" class="text-xs text-gray-400 mt-2"></p>
-
-      <ul id="docList" class="mt-2 space-y-1 text-xs text-gray-300"></ul>
-    </div>
-  </div>
-
-  <!-- Main -->
-  <div class="flex-1 flex flex-col">
-
-    <!-- Messages -->
-    <div id="chat" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-
-    <!-- Input -->
-    <div class="p-4 bg-[#40414f] flex">
-      <input id="message"
-             class="flex-1 p-3 rounded bg-[#343541] outline-none"
-             placeholder="Pose ta question..."
-             onkeypress="handleKeyPress(event)" />
-
-      <button onclick="sendMessage()"
-              class="ml-3 bg-green-500 px-4 py-2 rounded hover:bg-green-600">
-        Envoyer
+      <button class="btn-new" onclick="newChat()">
+        <span style="font-size:18px;line-height:1">+</span> Nouvelle conversation
       </button>
-    </div>
+
+      <div class="section-label">Historique</div>
+      <div class="history" id="history">
+        <div class="history-empty">Vos questions apparaîtront ici.</div>
+      </div>
+
+      <div class="kb-card">
+        <div class="kb-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f5b731" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Base de connaissances
+        </div>
+        <div class="kb-doc" id="kb-doc">Documentation IT</div>
+        <div class="kb-meta" id="kb-meta"></div>
+        <div class="kb-status" id="kb-status"><span class="pulse"></span><span id="kb-status-text">Connexion…</span></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="panel main">
+      <div class="topbar">
+        <span class="pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+          <span id="model-name">Llama 3.1 · Groq</span>
+        </span>
+        <span class="pill live">
+          Réponse en temps réel
+          <svg viewBox="0 0 24 24" fill="#f5b731"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </span>
+      </div>
+
+      <div class="messages" id="chat"></div>
+
+      <div class="composer">
+        <div class="suggestions" id="suggestions">
+          <button class="chip" onclick="ask(this.textContent)">Mot de passe expiré</button>
+          <button class="chip" onclick="ask(this.textContent)">Comment créer un ticket Jira ?</button>
+          <button class="chip" onclick="ask(this.textContent)">VPN déconnecté</button>
+        </div>
+        <div class="input-box">
+          <textarea id="message" rows="1" placeholder="Posez votre question…"></textarea>
+          <button class="send" id="send" onclick="sendMessage()" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Sources -->
+    <aside class="panel sources">
+      <div class="sources-head">
+        <div class="sources-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          Sources utilisées
+        </div>
+        <div class="sources-sub">Passages extraits de la documentation</div>
+      </div>
+      <div class="sources-body" id="sources">
+        <div class="sources-empty">Les passages utilisés pour répondre apparaîtront ici.</div>
+      </div>
+    </aside>
 
   </div>
 
 <script>
+const STAR = '<svg viewBox="0 0 24 24"><path fill="#fff7dd" d="M12 1.5c.6 5.6 4.9 9.9 10.5 10.5-5.6.6-9.9 4.9-10.5 10.5C11.4 16.9 7.1 12.6 1.5 12 7.1 11.4 11.4 7.1 12 1.5z"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#1c0c2e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+const INFO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-5M12 8h.01"/></svg>';
+
 const chat = document.getElementById("chat");
+const input = document.getElementById("message");
+const sendBtn = document.getElementById("send");
+const sourcesEl = document.getElementById("sources");
+const historyEl = document.getElementById("history");
 
-// Crée une bulle de message (textContent : pas d'injection HTML)
-function createBubble(text, sender, extraClass = "") {
-  const wrapper = document.createElement("div");
-  wrapper.className = sender === "user" ? "text-right" : "text-left";
+let busy = false;
+let history = [];
+let turnCount = 0;
 
-  const bubble = document.createElement("div");
-  bubble.className = "inline-block px-4 py-2 rounded-lg max-w-xl whitespace-pre-line text-left " +
-    (extraClass || (sender === "user" ? "bg-green-500" : "bg-[#444654]"));
-  bubble.textContent = text;
+document.querySelectorAll("[data-logo]").forEach(el => el.innerHTML = STAR);
 
-  wrapper.appendChild(bubble);
-  chat.appendChild(wrapper);
-  chat.scrollTop = chat.scrollHeight;
-  return bubble;
+// ---------- Utilitaires ----------
+const escapeHtml = s => s.replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const normalize = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+const STOPWORDS = new Set(["comment", "pourquoi", "quand", "quel", "quelle", "quels", "quelles", "est", "sont", "avec", "dans", "pour", "mon", "mes", "une", "des", "les", "que", "qui", "faire", "faut", "peux", "puis", "veux", "cette", "sur", "pas", "plus", "aussi", "votre", "notre", "leur", "elle", "nous", "vous"]);
+
+function keywords(question) {
+  return [...new Set((normalize(question).match(/[a-z0-9]+/g) || [])
+    .filter(w => w.length >= 4 && !STOPWORDS.has(w)))];
 }
 
-function addSources(bubble, sources) {
-  if (!sources || !sources.length) return;
-  const box = document.createElement("div");
-  box.className = "mt-2 pt-2 border-t border-gray-500 text-xs text-gray-300";
-  box.textContent = "📎 Sources : " + sources.join(" · ");
-  bubble.appendChild(box);
+function highlight(text, keys) {
+  if (!keys.length) return escapeHtml(text);
+  return text.split(/([\p{L}\p{N}]+)/u).map(part => {
+    if (!/[\p{L}\p{N}]/u.test(part)) return escapeHtml(part);
+    const w = normalize(part);
+    const hit = w.length >= 4 && keys.some(k => w.slice(0, 5) === k.slice(0, 5) && Math.abs(w.length - k.length) <= 3);
+    return hit ? `<mark>${escapeHtml(part)}</mark>` : escapeHtml(part);
+  }).join("");
 }
 
-// Envoyer un message
+function scrollToBottom() { chat.scrollTop = chat.scrollHeight; }
+
+function autoGrow() {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 140) + "px";
+}
+
+// ---------- Statut de la base ----------
+async function loadStatus() {
+  const statusEl = document.getElementById("kb-status");
+  const statusText = document.getElementById("kb-status-text");
+  try {
+    const res = await fetch("/status");
+    const s = await res.json();
+    document.getElementById("kb-doc").textContent = s.document;
+    document.getElementById("kb-meta").textContent = `${s.pages} pages · ${s.passages} passages`;
+    document.getElementById("model-name").textContent = s.model.startsWith("llama-3.1") ? "Llama 3.1 · Groq" : `${s.model} · Groq`;
+    statusText.textContent = "Indexée ✓";
+  } catch (e) {
+    statusEl.classList.add("off");
+    statusText.textContent = "Serveur injoignable";
+  }
+}
+
+// ---------- Écran d'accueil ----------
+function renderWelcome() {
+  chat.innerHTML = `
+    <div class="welcome">
+      <div class="logo-mark lg">${STAR}</div>
+      <h1>Bonjour, je suis <span>Nova</span></h1>
+      <p>Posez votre question sur la documentation IT : je vous réponds étape par étape, à partir des documents de l'entreprise uniquement.</p>
+    </div>`;
+}
+
+function renderSourcesEmpty() {
+  sourcesEl.innerHTML = '<div class="sources-empty">Les passages utilisés pour répondre apparaîtront ici.</div>';
+}
+
+// ---------- Affichage d'une réponse ----------
+function renderAnswer(container, text, done) {
+  const clean = text.replace(/\*\*/g, "").trim();
+  if (!clean) return;
+
+  if (/^je ne sais pas/i.test(normalize(clean))) {
+    container.innerHTML = `<div class="unknown">${INFO}<div>Je ne sais pas. Cette information n'est pas dans la documentation.</div></div>`;
+    return;
+  }
+
+  // Garder l'état des cases déjà cochées pendant le streaming
+  const doneSteps = new Set([...container.querySelectorAll(".step.done")].map(el => el.dataset.i));
+
+  const lines = clean.split("\n").map(l => l.trim()).filter(Boolean);
+  let html = "", inSteps = false, i = 0;
+  for (const line of lines) {
+    const m = line.match(/^(?:étape\s*)?(\d+)\s*[.)\-:]\s*(.+)$/i);
+    if (m) {
+      if (!inSteps) { html += '<div class="steps">'; inSteps = true; }
+      html += `
+        <div class="step${doneSteps.has(String(i)) ? " done" : ""}" data-i="${i}" onclick="this.classList.toggle('done')">
+          <span class="step-num">${escapeHtml(m[1])}</span>
+          <span class="step-text">${escapeHtml(m[2])}</span>
+          <span class="step-check">${CHECK}</span>
+        </div>`;
+      i++;
+    } else {
+      if (inSteps) { html += "</div>"; inSteps = false; }
+      html += `<div class="bot-text">${escapeHtml(line)}</div>`;
+    }
+  }
+  if (inSteps) html += "</div>";
+  container.innerHTML = html;
+}
+
+function sourceCardHtml(s, question, id, delay) {
+  const pct = Math.round(s.score * 100);
+  return `
+    <div class="source-card" id="${id}" style="animation-delay:${delay}s">
+      <div class="source-name">${DOC}${escapeHtml(s.source)}${s.page ? " · p. " + s.page : ""}</div>
+      <div class="source-text">${highlight(s.text, keywords(question))}</div>
+      <div class="relevance">
+        <span class="relevance-label">PERTINENCE</span>
+        <div class="bar"><div data-w="${pct}"></div></div>
+        <span class="relevance-value">${pct} %</span>
+      </div>
+    </div>`;
+}
+
+function renderSources(sources, question, turnId) {
+  if (!sources.length) {
+    sourcesEl.innerHTML = '<div class="sources-empty">Réponse issue d\'une règle interne : aucun passage utilisé.</div>';
+    return;
+  }
+  sourcesEl.innerHTML = sources.map((s, i) => sourceCardHtml(s, question, `src-${turnId}-${i}`, i * 0.12)).join("");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    sourcesEl.querySelectorAll(".bar > div").forEach(b => b.style.width = b.dataset.w + "%");
+  }));
+}
+
+const turnSources = {};
+
+function focusSource(turnId, i, chip) {
+  const card = document.getElementById(`src-${turnId}-${i}`);
+  const panelVisible = sourcesEl.offsetParent !== null;
+  if (!panelVisible || !card) {
+    // Petit écran (ou ancienne réponse) : afficher le passage sous la réponse
+    const holder = chip.closest(".msg-bot").querySelector(".inline-sources");
+    const id = `inline-${turnId}-${i}`;
+    const existing = document.getElementById(id);
+    if (existing) { existing.remove(); return; }
+    const {sources, question} = turnSources[turnId];
+    holder.insertAdjacentHTML("beforeend", sourceCardHtml(sources[i], question, id, 0));
+    const bar = document.getElementById(id).querySelector(".bar > div");
+    requestAnimationFrame(() => requestAnimationFrame(() => bar.style.width = bar.dataset.w + "%"));
+    return;
+  }
+  card.scrollIntoView({behavior: "smooth", block: "nearest"});
+  card.classList.add("flash");
+  setTimeout(() => card.classList.remove("flash"), 1200);
+}
+
+// ---------- Historique ----------
+function addToHistory(question) {
+  history.unshift(question);
+  historyEl.innerHTML = history.map((q, i) =>
+    `<button class="history-item${i === 0 ? " active" : ""}" title="${escapeHtml(q)}" onclick="ask(this.title)">${escapeHtml(q)}</button>`
+  ).join("");
+}
+
+// ---------- Envoi ----------
+window.ask = function (text) {
+  input.value = text;
+  sendMessage();
+};
+
 window.sendMessage = async function () {
-  const input = document.getElementById("message");
-  const message = input.value;
-  if (!message.trim()) return;
+  const message = input.value.trim();
+  if (!message || busy) return;
 
-  createBubble(message, "user");
+  busy = true;
+  sendBtn.disabled = true;
+  if (chat.querySelector(".welcome")) chat.innerHTML = "";
+
+  const turnId = ++turnCount;
+  addToHistory(message);
+
+  const userDiv = document.createElement("div");
+  userDiv.className = "msg-user";
+  userDiv.textContent = message;
+  chat.appendChild(userDiv);
+
   input.value = "";
+  autoGrow();
 
-  const bubble = createBubble("...", "bot");
+  const bot = document.createElement("div");
+  bot.className = "msg-bot";
+  bot.innerHTML = `
+    <div class="bot-head"><span class="logo-mark sm">${STAR}</span><strong>Nova</strong><span>· d'après la documentation IT</span></div>
+    <div class="answer"><div class="typing"><span></span><span></span><span></span></div></div>
+    <div class="source-chips"></div>
+    <div class="inline-sources"></div>`;
+  chat.appendChild(bot);
+  scrollToBottom();
+
+  const answerEl = bot.querySelector(".answer");
+  const chipsEl = bot.querySelector(".source-chips");
+  let answer = "";
 
   try {
     const res = await fetch("/chat", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ message })
+      body: JSON.stringify({message})
     });
-    const data = await res.json();
-    bubble.textContent = data.answer;
-    addSources(bubble, data.sources);
-  } catch (err) {
-    bubble.className = bubble.className.replace("bg-[#444654]", "bg-red-500");
-    bubble.textContent = "Erreur serveur 😢";
-  }
+    if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
 
-  chat.scrollTop = chat.scrollHeight;
-};
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
 
-// Import de PDF
-window.uploadPdfs = async function (files) {
-  const status = document.getElementById("uploadStatus");
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
 
-  for (const file of files) {
-    status.textContent = `⏳ Indexation de ${file.name}...`;
-    const form = new FormData();
-    form.append("file", file);
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const evt = JSON.parse(line);
 
-    try {
-      const res = await fetch("/upload", { method: "POST", body: form });
-      const data = await res.json();
-      status.textContent = res.ok
-        ? `✅ ${data.name} indexé (${data.chunks} passages)`
-        : `❌ ${data.detail}`;
-    } catch (err) {
-      status.textContent = `❌ Échec de l'import de ${file.name}`;
+        if (evt.type === "sources") {
+          turnSources[turnId] = {sources: evt.sources, question: message};
+          renderSources(evt.sources, message, turnId);
+          chipsEl.innerHTML = evt.sources.map((s, i) =>
+            `<button class="source-chip" onclick="focusSource(${turnId}, ${i}, this)">${DOC}${escapeHtml(s.source)}${s.page ? " · p. " + s.page : ""}</button>`
+          ).join("");
+        } else if (evt.type === "token") {
+          answer += evt.text;
+          renderAnswer(answerEl, answer, false);
+          scrollToBottom();
+        } else if (evt.type === "error") {
+          answerEl.innerHTML = `<div class="error">${escapeHtml(evt.message)}</div>`;
+        }
+      }
     }
-  }
-
-  document.getElementById("pdfInput").value = "";
-  loadDocuments();
-};
-
-// Liste des documents indexés
-async function loadDocuments() {
-  const list = document.getElementById("docList");
-  try {
-    const res = await fetch("/documents");
-    const data = await res.json();
-    list.innerHTML = "";
-    if (!data.documents.length) {
-      const li = document.createElement("li");
-      li.className = "italic text-gray-500";
-      li.textContent = "Aucun document";
-      list.appendChild(li);
-    }
-    for (const doc of data.documents) {
-      const li = document.createElement("li");
-      li.className = "truncate";
-      li.title = doc.name;
-      li.textContent = "• " + doc.name;
-      list.appendChild(li);
+    renderAnswer(answerEl, answer, true);
+    if (/^je ne sais pas/i.test(normalize(answer.trim()))) {
+      chipsEl.innerHTML = "";
+      sourcesEl.innerHTML = '<div class="sources-empty">Aucun passage de la documentation ne répond à cette question.</div>';
     }
   } catch (err) {
-    list.textContent = "";
+    answerEl.innerHTML = '<div class="error">Impossible de joindre le serveur. Réessayez dans un instant.</div>';
   }
-}
 
-// Touche Entrée
-window.handleKeyPress = function (event) {
-  if (event.key === "Enter") sendMessage();
+  busy = false;
+  sendBtn.disabled = false;
+  scrollToBottom();
+  input.focus();
 };
 
-// Nouvelle discussion
+// ---------- Nouvelle discussion ----------
 window.newChat = function () {
-  if (confirm("Voulez-vous démarrer une nouvelle discussion ?")) {
-    chat.innerHTML = "";
-  }
+  if (busy) return;
+  renderWelcome();
+  renderSourcesEmpty();
+  historyEl.querySelectorAll(".history-item").forEach(el => el.classList.remove("active"));
+  input.focus();
 };
 
-loadDocuments();
-</script>
+// ---------- Clavier ----------
+input.addEventListener("input", autoGrow);
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
+renderWelcome();
+loadStatus();
+</script>
 </body>
 </html>
